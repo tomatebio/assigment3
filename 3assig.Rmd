@@ -1,0 +1,87 @@
+---
+title: "Vacine Outbreaks"
+author: "carlos Tonhatti"
+date: "August 9, 2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Historic of anti-vax
+- In 1998, Andrew Wakefield  colleagues in Lancet "Vacine causes autism"
+- Immediately after a series of papers using epidemilogical data refuse this suggestion.
+- In 2010 Lancet retracted the paper due anti- ethical methods.
+
+I will show the impact of this in increase of cases. 
+
+```{r}
+library(stringr)
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+library(nominatim)
+vacine<-read.csv("vacine.csv")
+
+vacineClear<-vacine[,c(1:13)]
+
+vacineClear$Outbreak<- gsub(".*[Ff]lu*","flu",vacineClear$Outbreak) 
+vacineClear$Outbreak<-as.factor(vacineClear$Outbreak)
+vacineClear$Long<-as.numeric(as.vector(vacineClear$Long))
+
+
+
+tmp_date<-str_split(vacineClear$Date,"-")
+
+vacineClear$Country<-str_trim(vacineClear$Location.1.1)
+extractDate<-function(x){
+     return(x[1])
+}
+
+tmp_date2<-sapply(tmp_date,extractDate)
+
+tmp_date2[grep("\\.",tmp_date2)]<-as.numeric(tmp_date2[grep("\\.",tmp_date2)])
+
+# imputacao de data
+tmp_date2[grep("/",tmp_date2,invert=TRUE)]<-paste0("1/",tmp_date2[grep("/",tmp_date2,invert=TRUE)])
+
+vacineClear$Date<-as.Date(paste0("1/",tmp_date2), format="%d/%m/%Y")
+
+vacineClear$Year<-as.numeric(format(vacineClear$Date,"%Y"))
+
+
+vacine_tbl<-tbl_df(vacineClear) 
+
+# tabela cases
+resu<-vacine_tbl %>%
+  group_by(Year,Category) %>%
+  summarise(Cases=sum(Cases))
+ library(plotly)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+## Overtime
+```{r}
+ggplotly(ggplot(resu,aes(x=Year,y=Cases,color=Category)) + geom_line())
+```
+
+
+
+## References 
+
+- Wakefield AJ, Murch SH, Anthony A, Linnell J, Casson DM, Malik M, et al. Ileal-lymphoid-nodular hyperplasia, non-specific colitis, and pervasive developmental disorder in children. Lancet. 1998;351:637–41.
+
+Data from : https://www.cfr.org/interactives/GH_Vaccine_Map/ 
